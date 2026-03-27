@@ -1,0 +1,352 @@
+<%- include('partials/header') %>
+
+<!-- URL de la API -->
+<div class="mb-3">
+    <label class="form-label fw-bold">URL de la API:</label>
+    <input type="text" class="form-control" id="apiUrl" value="http://localhost:5002/alumnos">
+</div>
+
+<hr>
+
+<!-- ===== AGREGAR ===== -->
+<h4>Agregar Alumno</h4>
+<div class="row g-2 mb-3">
+    <div class="col-md-2">
+        <input type="text" class="form-control" id="addMatricula" placeholder="Matricula" maxlength="10">
+    </div>
+    <div class="col-md-2">
+        <input type="text" class="form-control" id="addNombre" placeholder="Nombre">
+    </div>
+    <div class="col-md-2">
+        <input type="text" class="form-control" id="addDomicilio" placeholder="Domicilio">
+    </div>
+    <div class="col-md-2">
+        <input type="date" class="form-control" id="addFecha">
+    </div>
+    <div class="col-md-1">
+        <select class="form-select" id="addSexo">
+            <option value="M">M</option>
+            <option value="F">F</option>
+        </select>
+    </div>
+    <div class="col-md-1">
+        <select class="form-select" id="addStatus">
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-success w-100" onclick="agregarAlumno()">Agregar</button>
+    </div>
+</div>
+
+<hr>
+
+<!-- ===== LISTAR TODOS ===== -->
+<h4>Listar Todos</h4>
+<button class="btn btn-primary mb-3" onclick="listarTodos()">Cargar Alumnos</button>
+<div id="contenedorTodos" style="display:none;">
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th><th>Matricula</th><th>Nombre</th><th>Domicilio</th>
+                <th>Fecha Nac.</th><th>Sexo</th><th>Status</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tbodyAlumnos"></tbody>
+    </table>
+</div>
+
+<hr>
+
+<!-- ===== BUSCAR POR ID ===== -->
+<h4>Buscar por ID</h4>
+<div class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="number" class="form-control" id="searchId" placeholder="ID">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100" onclick="buscarPorId()">Buscar</button>
+    </div>
+</div>
+<div id="resultBuscarId" style="display:none;"></div>
+
+<hr>
+
+<!-- ===== BUSCAR POR MATRICULA ===== -->
+<h4>Buscar por Matricula</h4>
+<div class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="text" class="form-control" id="searchMatricula" placeholder="Matricula">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100" onclick="buscarPorMatricula()">Buscar</button>
+    </div>
+</div>
+<div id="resultBuscarMat" style="display:none;"></div>
+
+<hr>
+
+<!-- ===== ACTUALIZAR ===== -->
+<h4>Actualizar Alumno</h4>
+<div class="row g-2 mb-2">
+    <div class="col-md-3">
+        <input type="number" class="form-control" id="updId" placeholder="ID del alumno">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-info w-100" onclick="cargarParaActualizar()">Cargar</button>
+    </div>
+</div>
+<div class="row g-2 mb-3" id="updateForm" style="display:none;">
+    <div class="col-md-2">
+        <input type="text" class="form-control" id="updMatricula" placeholder="Matricula">
+    </div>
+    <div class="col-md-2">
+        <input type="text" class="form-control" id="updNombre" placeholder="Nombre">
+    </div>
+    <div class="col-md-2">
+        <input type="text" class="form-control" id="updDomicilio" placeholder="Domicilio">
+    </div>
+    <div class="col-md-2">
+        <input type="date" class="form-control" id="updFecha">
+    </div>
+    <div class="col-md-1">
+        <select class="form-select" id="updSexo">
+            <option value="M">M</option>
+            <option value="F">F</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-warning w-100" onclick="actualizarAlumno()">Actualizar</button>
+    </div>
+</div>
+<div id="resultActualizar" style="display:none;"></div>
+
+<hr>
+
+<!-- ===== BORRAR ===== -->
+<h4>Borrar Alumno</h4>
+<div class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="number" class="form-control" id="deleteId" placeholder="ID del alumno">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-danger w-100" onclick="borrarAlumno()">Eliminar</button>
+    </div>
+</div>
+<div id="resultBorrar" style="display:none;"></div>
+
+<!-- ===== JAVASCRIPT CON FETCH ===== -->
+<script>
+    function getApiUrl() {
+        return document.getElementById('apiUrl').value.replace(/\/+$/, '');
+    }
+
+    // Genera tabla HTML con datos de UN alumno
+    function tablaAlumno(a) {
+        var fecha = a.fechanac ? new Date(a.fechanac).toLocaleDateString('es-MX') : '-';
+        var statusBadge = a.status
+            ? '<span class="badge bg-success">Activo</span>'
+            : '<span class="badge bg-secondary">Inactivo</span>';
+        return '<table class="table table-bordered">' +
+            '<thead class="table-dark"><tr>' +
+            '<th>ID</th><th>Matricula</th><th>Nombre</th><th>Domicilio</th>' +
+            '<th>Fecha Nac.</th><th>Sexo</th><th>Status</th></tr></thead>' +
+            '<tbody><tr>' +
+            '<td>' + a.id + '</td>' +
+            '<td>' + (a.matricula || '-') + '</td>' +
+            '<td>' + (a.nombre || '-') + '</td>' +
+            '<td>' + (a.domicilio || '-') + '</td>' +
+            '<td>' + fecha + '</td>' +
+            '<td>' + (a.sexo || '-') + '</td>' +
+            '<td>' + statusBadge + '</td>' +
+            '</tr></tbody></table>';
+    }
+
+    // LISTAR TODOS
+    async function listarTodos() {
+        try {
+            var res = await fetch(getApiUrl() + '/todos');
+            var data = await res.json();
+            var tbody = document.getElementById('tbodyAlumnos');
+            tbody.innerHTML = '';
+            data.forEach(function(a) {
+                var fecha = a.fechanac ? new Date(a.fechanac).toLocaleDateString('es-MX') : '-';
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + a.id + '</td>' +
+                    '<td>' + (a.matricula || '-') + '</td>' +
+                    '<td>' + (a.nombre || '-') + '</td>' +
+                    '<td>' + (a.domicilio || '-') + '</td>' +
+                    '<td>' + fecha + '</td>' +
+                    '<td>' + (a.sexo || '-') + '</td>' +
+                    '<td>' + (a.status ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>') + '</td>' +
+                    '<td>' +
+                        '<button class="btn btn-sm btn-warning me-1" onclick="toggleStatus(' + a.id + ')">Status</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="borrarDesdeTabla(' + a.id + ')">Borrar</button>' +
+                    '</td></tr>';
+            });
+            document.getElementById('contenedorTodos').style.display = 'block';
+        } catch (err) {
+            alert('Error al conectar con la API');
+        }
+    }
+
+    async function toggleStatus(id) {
+        await fetch(getApiUrl() + '/' + id + '/status', { method: 'PATCH' });
+        listarTodos();
+    }
+
+    async function borrarDesdeTabla(id) {
+        if (!confirm('Eliminar alumno ID ' + id + '?')) return;
+        await fetch(getApiUrl() + '/' + id, { method: 'DELETE' });
+        listarTodos();
+    }
+
+    // AGREGAR
+    async function agregarAlumno() {
+        var alumno = {
+            matricula: document.getElementById('addMatricula').value,
+            nombre: document.getElementById('addNombre').value,
+            domicilio: document.getElementById('addDomicilio').value,
+            fechanac: document.getElementById('addFecha').value,
+            sexo: document.getElementById('addSexo').value,
+            status: parseInt(document.getElementById('addStatus').value)
+        };
+        try {
+            var res = await fetch(getApiUrl(), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(alumno)
+            });
+            var data = await res.json();
+            alert(res.ok ? 'Alumno agregado con ID: ' + data.id : 'Error al agregar');
+        } catch (err) {
+            alert('Error de conexion');
+        }
+    }
+
+    // BUSCAR POR ID
+    async function buscarPorId() {
+        var id = document.getElementById('searchId').value;
+        if (!id) return alert('Ingresa un ID');
+        try {
+            var res = await fetch(getApiUrl() + '/' + id);
+            var data = await res.json();
+            var el = document.getElementById('resultBuscarId');
+            el.style.display = 'block';
+            if (res.ok) {
+                el.innerHTML = tablaAlumno(data);
+            } else {
+                el.innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
+            }
+        } catch (err) {
+            var el = document.getElementById('resultBuscarId');
+            el.style.display = 'block';
+            el.innerHTML = '<div class="alert alert-danger">Error de conexion</div>';
+        }
+    }
+
+    // BUSCAR POR MATRICULA
+    async function buscarPorMatricula() {
+        var mat = document.getElementById('searchMatricula').value;
+        if (!mat) return alert('Ingresa una matricula');
+        try {
+            var res = await fetch(getApiUrl() + '/matricula/' + mat);
+            var data = await res.json();
+            var el = document.getElementById('resultBuscarMat');
+            el.style.display = 'block';
+            if (res.ok) {
+                el.innerHTML = tablaAlumno(data);
+            } else {
+                el.innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
+            }
+        } catch (err) {
+            var el = document.getElementById('resultBuscarMat');
+            el.style.display = 'block';
+            el.innerHTML = '<div class="alert alert-danger">Error de conexion</div>';
+        }
+    }
+
+    // CARGAR PARA ACTUALIZAR
+    async function cargarParaActualizar() {
+        var id = document.getElementById('updId').value;
+        if (!id) return alert('Ingresa un ID');
+        try {
+            var res = await fetch(getApiUrl() + '/' + id);
+            if (!res.ok) return alert('Alumno no encontrado');
+            var a = await res.json();
+            document.getElementById('updMatricula').value = a.matricula || '';
+            document.getElementById('updNombre').value = a.nombre || '';
+            document.getElementById('updDomicilio').value = a.domicilio || '';
+            document.getElementById('updFecha').value = a.fechanac ? a.fechanac.split('T')[0] : '';
+            document.getElementById('updSexo').value = a.sexo || 'M';
+            document.getElementById('updateForm').style.display = 'flex';
+        } catch (err) {
+            alert('Error de conexion');
+        }
+    }
+
+    // ACTUALIZAR
+    async function actualizarAlumno() {
+        var id = document.getElementById('updId').value;
+        var alumno = {
+            matricula: document.getElementById('updMatricula').value,
+            nombre: document.getElementById('updNombre').value,
+            domicilio: document.getElementById('updDomicilio').value,
+            fechanac: document.getElementById('updFecha').value,
+            sexo: document.getElementById('updSexo').value
+        };
+        try {
+            var res = await fetch(getApiUrl() + '/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(alumno)
+            });
+            var data = await res.json();
+            var el = document.getElementById('resultActualizar');
+            el.style.display = 'block';
+            if (res.ok) {
+                var res2 = await fetch(getApiUrl() + '/' + id);
+                var alumnoActualizado = await res2.json();
+                el.innerHTML = '<div class="alert alert-success">' + data.mensaje + '</div>' + tablaAlumno(alumnoActualizado);
+            } else {
+                el.innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
+            }
+        } catch (err) {
+            var el = document.getElementById('resultActualizar');
+            el.style.display = 'block';
+            el.innerHTML = '<div class="alert alert-danger">Error de conexion</div>';
+        }
+    }
+
+    // BORRAR
+    async function borrarAlumno() {
+        var id = document.getElementById('deleteId').value;
+        if (!id) return alert('Ingresa un ID');
+        try {
+            // Buscar alumno primero para mostrarlo
+            var resBuscar = await fetch(getApiUrl() + '/' + id);
+            if (!resBuscar.ok) {
+                var el = document.getElementById('resultBorrar');
+                el.style.display = 'block';
+                el.innerHTML = '<div class="alert alert-danger">Alumno no encontrado</div>';
+                return;
+            }
+            var alumno = await resBuscar.json();
+            if (!confirm('Eliminar a ' + alumno.nombre + ' (ID: ' + id + ')?')) return;
+
+            var res = await fetch(getApiUrl() + '/' + id, { method: 'DELETE' });
+            var data = await res.json();
+            var el = document.getElementById('resultBorrar');
+            el.style.display = 'block';
+            el.innerHTML = '<div class="alert alert-warning">' + data.mensaje + '</div>' +
+                '<p class="text-muted">Alumno eliminado:</p>' + tablaAlumno(alumno);
+        } catch (err) {
+            var el = document.getElementById('resultBorrar');
+            el.style.display = 'block';
+            el.innerHTML = '<div class="alert alert-danger">Error de conexion</div>';
+        }
+    }
+</script>
+
+<%- include('partials/footer') %>
