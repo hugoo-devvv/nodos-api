@@ -2,11 +2,11 @@ import mysql from "mysql2";
 
 // configurar la conexion
 var conexion = mysql.createConnection({
-    host: "localhost",
-    port: 3307,
-    user: "root",
-    password: "",
-    database: "sistemas"
+    host: process.env.MYSQLHOST || "localhost",
+    port: process.env.MYSQLPORT || 3307,
+    user: process.env.MYSQLUSER || "root",
+    password: process.env.MYSQLPASSWORD || "",
+    database: process.env.MYSQLDATABASE || "sistemas"
 });
 
 // abrir la conexion

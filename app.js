@@ -3,7 +3,7 @@ import cors from "cors";
 import alumnosRouter from "./router/index.js";
 
 const app = express();
-const PORT = 5002;
+const PORT = process.env.PORT || 5002;
 
 // Motor de plantillas EJS
 app.set("view engine", "ejs");
